@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '@/providers/query-provider';
+import { CartProvider } from '@/context/CartContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,9 +25,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-stone-50 text-stone-900 font-sans selection:bg-amber-100 selection:text-amber-900">
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-amber-100 selection:text-amber-900">
         <QueryProvider>
-          {children}
+          <CartProvider>
+            {children}
+          </CartProvider>
         </QueryProvider>
       </body>
     </html>
