@@ -7,6 +7,16 @@ import { initializePaystackTransaction } from '@/lib/paystack';
 import { generateOrderNumber } from '@/lib/utils';
 import { CartItem } from '@/types/database';
 
+export async function checkCouponAction(code: string, subtotal: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return validateAndApplyCoupon({
+    code,
+    subtotal,
+    customerId: user?.id || '',
+  });
+}
+
 export async function createCheckoutOrderAction({
   addressId,
   shippingAddress,

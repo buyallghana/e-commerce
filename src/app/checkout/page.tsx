@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import StoreShell from '@/components/layout/StoreShell';
 import { useCart } from '@/context/CartContext';
-import { createCheckoutOrderAction } from '@/app/actions/checkout';
-import { validateAndApplyCoupon } from '@/lib/data/discounts';
+import { createCheckoutOrderAction, checkCouponAction } from '@/app/actions/checkout';
 import { formatGHS } from '@/lib/utils';
 import { MapPin, ShieldCheck, ArrowRight, ChevronRight } from 'lucide-react';
 
@@ -59,11 +58,7 @@ export default function CheckoutPage() {
     setCouponStatus(null);
     if (!couponCode.trim()) return;
 
-    const res = await validateAndApplyCoupon({
-      code: couponCode.trim(),
-      subtotal: cartSubtotal,
-      customerId: '',
-    });
+    const res = await checkCouponAction(couponCode.trim(), cartSubtotal);
 
     if (res.valid && res.discountAmount) {
       setDiscountAmount(res.discountAmount);
