@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { CartItem } from '@/types/database';
+import { CartItem, Product } from '@/types/database';
 
 export async function getCart(): Promise<CartItem[]> {
   const supabase = await createClient();
@@ -38,7 +38,6 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
     return { error: 'Please log in to add items to your cart.', unauthenticated: true };
   }
 
-  // Check variant existence and stock
   const { data: variant, error: varError } = await supabase
     .from('product_variants')
     .select('stock_quantity')
@@ -53,7 +52,6 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
     return { error: `Only ${variant.stock_quantity} available in stock.` };
   }
 
-  // Check if already in cart
   const { data: existing } = await supabase
     .from('cart_items')
     .select('id, quantity')
@@ -98,7 +96,6 @@ export async function updateCartItemQuantityAction(cartItemId: string, quantity:
     return removeCartItemAction(cartItemId);
   }
 
-  // Check stock
   const { data: cartItem } = await supabase
     .from('cart_items')
     .select('variant:product_variants(stock_quantity)')
@@ -168,4 +165,28 @@ export async function toggleWishlistAction(productId: string) {
     revalidatePath('/wishlist');
     return { isWishlisted: true };
   }
+}
+
+export async function getWishlist(): Promise<Product[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('wishlists')
+    .select(`
+      product:products (
+        *,
+        category:categories (*),
+        variants:product_variants (*)
+      )
+    `)
+    .eq('customer_id', user.id);
+
+  if (error || !data) return [];
+
+  return data
+    .map((item) => item.product as unknown as Product)
+    .filter(Boolean);
 }

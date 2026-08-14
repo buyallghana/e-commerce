@@ -4,7 +4,7 @@ import StoreShell from '@/components/layout/StoreShell';
 import ProductCard from '@/components/products/ProductCard';
 import { getCategories, getProducts } from '@/lib/data/products';
 import { createClient } from '@/lib/supabase/server';
-import { LayoutGrid, Filter, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ShoppingBag } from 'lucide-react';
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -54,109 +54,57 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <StoreShell categories={categories} userEmail={user?.email} isAdmin={isAdmin}>
-      {/* Breadcrumb Header */}
-      <div className="bg-white border-b border-slate-200/80 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-2 text-xs font-medium text-slate-500">
-            <Link href="/" className="hover:text-slate-900 transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <Link href="/products" className="hover:text-slate-900 transition-colors">
-              Catalog
-            </Link>
-            {activeCategory && (
-              <>
-                <ChevronRight className="w-3.5 h-3.5" />
-                <span className="text-slate-900 font-bold">{activeCategory.name}</span>
-              </>
-            )}
-            {query && (
-              <>
-                <ChevronRight className="w-3.5 h-3.5" />
-                <span className="text-slate-900 font-bold">&quot;{query}&quot;</span>
-              </>
-            )}
-          </nav>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
-                {activeCategory ? activeCategory.name : query ? `Search: "${query}"` : 'All Products'}
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Showing {products.length} of {total} genuine goods
-              </p>
-            </div>
-
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-600">Sort By:</span>
-              <div className="flex items-center gap-1">
-                {[
-                  { label: 'Newest', value: 'newest' },
-                  { label: 'Price: Low to High', value: 'price_asc' },
-                  { label: 'Price: High to Low', value: 'price_desc' },
-                ].map((s) => {
-                  const newParams = new URLSearchParams();
-                  if (categorySlug) newParams.set('category', categorySlug);
-                  if (query) newParams.set('q', query);
-                  if (minPrice) newParams.set('minPrice', minPrice.toString());
-                  if (maxPrice) newParams.set('maxPrice', maxPrice.toString());
-                  newParams.set('sort', s.value);
-
-                  const isSelected = sortBy === s.value;
-                  return (
-                    <Link
-                      key={s.value}
-                      href={`/products?${newParams.toString()}`}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                        isSelected
-                          ? 'bg-slate-950 text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {s.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+      {/* Breadcrumb Strip */}
+      <div className="bg-[#f5f5f5] border-b border-[#e1e1e1] py-2.5">
+        <div className="container-custom flex items-center gap-2 text-[12px] text-[#666]">
+          <Link href="/" className="hover:text-[#1e5cea]">Home</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-[#999]" />
+          <Link href="/products" className="hover:text-[#1e5cea]">Shop</Link>
+          {activeCategory && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 text-[#999]" />
+              <span className="font-bold text-[#222]">{activeCategory.name}</span>
+            </>
+          )}
+          {query && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5 text-[#999]" />
+              <span className="font-bold text-[#222]">Search: &quot;{query}&quot;</span>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Main Content: Sidebar & Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Filters (Desktop) */}
-          <aside className="hidden lg:block space-y-6">
-            {/* Category Filter */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <h3 className="font-extrabold text-sm text-slate-950 mb-3 uppercase tracking-wider text-[11px] text-slate-400">
-                Departments
+      <div className="container-custom py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Sidebar (Wolmart Shop Sidebar Style) */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-6">
+            {/* Category Filter Box */}
+            <div className="bg-white border border-[#e1e1e1] rounded-md p-4 shadow-2xs">
+              <h3 className="font-bold text-[14px] text-[#222] uppercase tracking-wider pb-2.5 border-b border-[#f1f1f1] mb-3">
+                All Departments
               </h3>
-              <ul className="space-y-1 text-sm">
+              <ul className="space-y-1.5 text-[13px]">
                 <li>
                   <Link
                     href="/products"
-                    className={`block px-3 py-2 rounded-lg font-semibold transition-colors ${
+                    className={`block py-1.5 px-2 rounded font-semibold transition-colors ${
                       !categorySlug
-                        ? 'bg-amber-50 text-amber-900 border border-amber-200/60'
-                        : 'text-slate-700 hover:bg-slate-50'
+                        ? 'bg-[#1e5cea] text-white'
+                        : 'text-[#555] hover:text-[#1e5cea] hover:bg-[#f9f9f9]'
                     }`}
                   >
-                    All Departments
+                    All Products ({total})
                   </Link>
                 </li>
                 {categories.map((c) => (
                   <li key={c.id}>
                     <Link
                       href={`/products?category=${c.slug}`}
-                      className={`block px-3 py-2 rounded-lg font-semibold transition-colors ${
+                      className={`block py-1.5 px-2 rounded font-semibold transition-colors ${
                         categorySlug === c.slug
-                          ? 'bg-amber-50 text-amber-900 border border-amber-200/60'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          ? 'bg-[#1e5cea] text-white'
+                          : 'text-[#555] hover:text-[#1e5cea] hover:bg-[#f9f9f9]'
                       }`}
                     >
                       {c.name}
@@ -167,11 +115,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </div>
 
             {/* Price Filter Box */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <h3 className="font-extrabold text-sm text-slate-950 mb-3 uppercase tracking-wider text-[11px] text-slate-400">
-                Price Filter (GHS)
+            <div className="bg-white border border-[#e1e1e1] rounded-md p-4 shadow-2xs">
+              <h3 className="font-bold text-[14px] text-[#222] uppercase tracking-wider pb-2.5 border-b border-[#f1f1f1] mb-3">
+                Price Range (GHS)
               </h3>
-              <div className="space-y-2 text-xs">
+              <div className="space-y-1.5 text-[13px]">
                 {[
                   { label: 'Under GH₵ 100', min: undefined, max: 100 },
                   { label: 'GH₵ 100 – GH₵ 300', min: 100, max: 300 },
@@ -188,10 +136,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     <Link
                       key={idx}
                       href={`/products?${p.toString()}`}
-                      className={`block px-3 py-2 rounded-lg font-semibold transition-colors ${
+                      className={`block py-1.5 px-2 rounded font-semibold transition-colors ${
                         isMatch
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          ? 'bg-[#1e5cea] text-white'
+                          : 'text-[#555] hover:text-[#1e5cea] hover:bg-[#f9f9f9]'
                       }`}
                     >
                       {tier.label}
@@ -201,66 +149,103 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               </div>
             </div>
 
-            {/* Free Delivery Notice Box */}
-            <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-slate-900">
-              <h4 className="font-extrabold text-xs text-amber-900 uppercase tracking-wider mb-1">
-                🇬🇭 Ghana-Wide Delivery
-              </h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Calculated automatically at checkout by destination region and total parcel weight.
+            {/* Delivery Note Box */}
+            <div className="bg-[#f0f4fe] border border-[#d2e0fc] rounded-md p-4 text-[12px] text-[#222]">
+              <h4 className="font-bold text-[#1e5cea] uppercase mb-1">🇬🇭 Fast Dispatch</h4>
+              <p className="text-[#555] leading-relaxed">
+                Orders shipped within 24-48 hours with door-to-door delivery across Ghana.
               </p>
             </div>
           </aside>
 
-          {/* Product Grid Area */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Active Filters Pill Row */}
+          {/* Main Catalog View (9 Cols) */}
+          <div className="lg:col-span-9 space-y-4">
+            {/* Top Toolbar Bar */}
+            <div className="bg-white border border-[#e1e1e1] rounded-md p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+              <span className="text-[13px] text-[#666]">
+                Showing <strong className="text-[#222]">{products.length}</strong> of{' '}
+                <strong className="text-[#222]">{total}</strong> products
+              </span>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-2 text-[13px]">
+                <span className="text-[#666] font-medium">Sort by:</span>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: 'Newest', value: 'newest' },
+                    { label: 'Price: Low to High', value: 'price_asc' },
+                    { label: 'Price: High to Low', value: 'price_desc' },
+                  ].map((s) => {
+                    const p = new URLSearchParams();
+                    if (categorySlug) p.set('category', categorySlug);
+                    if (query) p.set('q', query);
+                    if (minPrice) p.set('minPrice', minPrice.toString());
+                    if (maxPrice) p.set('maxPrice', maxPrice.toString());
+                    p.set('sort', s.value);
+
+                    const isSelected = sortBy === s.value;
+                    return (
+                      <Link
+                        key={s.value}
+                        href={`/products?${p.toString()}`}
+                        className={`px-2.5 py-1 rounded text-[12px] font-semibold transition-colors ${
+                          isSelected
+                            ? 'bg-[#1e5cea] text-white'
+                            : 'bg-[#f4f4f4] text-[#444] hover:bg-[#e9e9e9]'
+                        }`}
+                      >
+                        {s.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Filters Tag Bar */}
             {(categorySlug || query || minPrice || maxPrice) && (
-              <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-xl border border-slate-200">
-                <span className="text-xs text-slate-400 font-bold">Active filters:</span>
+              <div className="flex flex-wrap items-center gap-2 bg-white border border-[#e1e1e1] p-2.5 rounded-md text-[12px]">
+                <span className="font-bold text-[#888]">Active:</span>
                 {categorySlug && (
-                  <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md text-xs font-semibold">
+                  <span className="bg-[#f0f4fe] text-[#1e5cea] font-bold px-2 py-0.5 rounded border border-[#d2e0fc]">
                     Category: {activeCategory?.name || categorySlug}
                   </span>
                 )}
                 {query && (
-                  <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md text-xs font-semibold">
+                  <span className="bg-[#f0f4fe] text-[#1e5cea] font-bold px-2 py-0.5 rounded border border-[#d2e0fc]">
                     Query: &quot;{query}&quot;
                   </span>
                 )}
                 {(minPrice || maxPrice) && (
-                  <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md text-xs font-semibold">
-                    Price: GHS {minPrice || 0} - {maxPrice || 'Any'}
+                  <span className="bg-[#f0f4fe] text-[#1e5cea] font-bold px-2 py-0.5 rounded border border-[#d2e0fc]">
+                    Price: GH₵ {minPrice || 0} - {maxPrice || 'Any'}
                   </span>
                 )}
-                <Link
-                  href="/products"
-                  className="text-xs font-bold text-rose-600 hover:underline ml-auto"
-                >
-                  Clear All
+                <Link href="/products" className="text-[#e53935] font-bold hover:underline ml-auto">
+                  Reset All Filters
                 </Link>
               </div>
             )}
 
-            {/* Product Cards */}
+            {/* Product Cards Grid */}
             {products.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-                  <LayoutGrid className="w-8 h-8" />
+              <div className="bg-white border border-[#e1e1e1] rounded-md p-12 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-[#f4f4f4] flex items-center justify-center mx-auto text-[#999]">
+                  <ShoppingBag className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">No products found</h3>
-                <p className="text-sm text-slate-500 max-w-sm mx-auto">
-                  Try adjusting your search terms or clearing your price filters.
+                <h3 className="font-bold text-[16px] text-[#222]">No matching products found</h3>
+                <p className="text-[13px] text-[#666] max-w-sm mx-auto">
+                  Try clearing your filters or searching for another keyword.
                 </p>
                 <Link
                   href="/products"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-950 text-white font-semibold text-xs hover:bg-slate-800 transition-colors"
+                  className="inline-block bg-[#1e5cea] text-white px-5 py-2 rounded text-[13px] font-bold"
                 >
-                  Reset Filters
+                  Clear All Filters
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
@@ -269,11 +254,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="pt-8 border-t border-slate-200/80 flex items-center justify-between">
-                <p className="text-xs text-slate-500 font-medium">
-                  Page <strong className="text-slate-900">{currentPage}</strong> of{' '}
-                  <strong className="text-slate-900">{totalPages}</strong>
-                </p>
+              <div className="bg-white border border-[#e1e1e1] rounded-md p-3.5 flex items-center justify-between mt-6">
+                <span className="text-[12px] text-[#666]">
+                  Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                </span>
 
                 <div className="flex items-center gap-2">
                   {currentPage > 1 && (
@@ -281,10 +265,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       href={`/products?page=${currentPage - 1}${
                         categorySlug ? `&category=${categorySlug}` : ''
                       }${query ? `&q=${query}` : ''}&sort=${sortBy}`}
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                      className="px-3 py-1.5 rounded border border-[#ddd] bg-white text-[12px] font-bold text-[#444] hover:bg-[#f5f5f5]"
                     >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>Previous</span>
+                      <ChevronLeft className="w-4 h-4 inline mr-1" />
+                      Prev
                     </Link>
                   )}
 
@@ -293,10 +277,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       href={`/products?page=${currentPage + 1}${
                         categorySlug ? `&category=${categorySlug}` : ''
                       }${query ? `&q=${query}` : ''}&sort=${sortBy}`}
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-slate-950 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
+                      className="px-3 py-1.5 rounded bg-[#1e5cea] text-white text-[12px] font-bold hover:bg-[#1545b5]"
                     >
-                      <span>Next</span>
-                      <ChevronRight className="w-4 h-4" />
+                      Next
+                      <ChevronRight className="w-4 h-4 inline ml-1" />
                     </Link>
                   )}
                 </div>

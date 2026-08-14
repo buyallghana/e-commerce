@@ -1,56 +1,83 @@
 import React from 'react';
 import Link from 'next/link';
 import { Category } from '@/types/database';
-import { LayoutGrid, Flame, Tag, Sparkles } from 'lucide-react';
+import { Menu, ChevronDown, Flame, Tag } from 'lucide-react';
 
 export default function CategoryNav({ categories = [] }: { categories?: Category[] }) {
   return (
-    <nav className="bg-slate-900 text-white border-b border-slate-800 hidden md:block">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* All Departments Button */}
-        <div className="flex items-center gap-1">
-          <Link
-            href="/products"
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-3 font-bold text-xs uppercase tracking-wider transition-colors"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span>All Categories</span>
-          </Link>
+    <nav className="bg-white border-b border-[#e1e1e1] hidden lg:block">
+      <div className="container-custom flex items-center justify-between">
+        {/* Left: Browse Categories Button */}
+        <div className="flex items-center">
+          <div className="relative group">
+            <Link
+              href="/products"
+              className="flex items-center justify-between gap-3 bg-[#1e5cea] hover:bg-[#1545b5] text-white px-5 py-3.5 w-[240px] font-bold text-[13px] uppercase tracking-wider transition-colors"
+            >
+              <span className="flex items-center gap-2.5">
+                <Menu className="w-4 h-4 stroke-[2.5]" />
+                Browse Categories
+              </span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </Link>
 
-          {/* Categories List */}
-          <div className="flex items-center space-x-1 pl-3">
-            {categories.slice(0, 5).map((category) => (
+            {/* Dropdown Menu on hover */}
+            <div className="absolute top-full left-0 w-[240px] bg-white border border-[#e1e1e1] shadow-lg py-2 z-50 hidden group-hover:block divide-y divide-[#f5f5f5]">
+              {categories.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/products?category=${c.slug}`}
+                  className="block px-4 py-2.5 text-[13px] font-medium text-[#333] hover:text-[#1e5cea] hover:bg-[#f9f9f9] transition-colors"
+                >
+                  {c.name}
+                </Link>
+              ))}
               <Link
-                key={category.id}
-                href={`/products?category=${category.slug}`}
-                className="px-3.5 py-3 text-xs font-semibold text-slate-200 hover:text-amber-400 hover:bg-slate-800/60 rounded-md transition-colors"
+                href="/products"
+                className="block px-4 py-2.5 text-[13px] font-bold text-[#1e5cea] hover:bg-[#f9f9f9] transition-colors"
               >
-                {category.name}
+                All Departments →
+              </Link>
+            </div>
+          </div>
+
+          {/* Center Links */}
+          <div className="flex items-center space-x-1 pl-4">
+            <Link
+              href="/"
+              className="px-3.5 py-3.5 text-[13px] font-bold text-[#222529] hover:text-[#1e5cea] transition-colors"
+            >
+              Home
+            </Link>
+            <Link
+              href="/products"
+              className="px-3.5 py-3.5 text-[13px] font-bold text-[#222529] hover:text-[#1e5cea] transition-colors"
+            >
+              Shop / Catalog
+            </Link>
+            {categories.slice(0, 4).map((c) => (
+              <Link
+                key={c.id}
+                href={`/products?category=${c.slug}`}
+                className="px-3 py-3.5 text-[13px] font-semibold text-[#555] hover:text-[#1e5cea] transition-colors"
+              >
+                {c.name}
               </Link>
             ))}
+            <Link
+              href="/products?sort=newest"
+              className="px-3.5 py-3.5 text-[13px] font-bold text-[#e53935] hover:text-[#c62828] flex items-center gap-1 transition-colors"
+            >
+              <Flame className="w-3.5 h-3.5 fill-[#e53935]" />
+              <span>Deals</span>
+            </Link>
           </div>
         </div>
 
-        {/* Highlight Deals & Promos */}
-        <div className="flex items-center gap-4 text-xs font-bold">
-          <Link
-            href="/products?sort=newest"
-            className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>New Arrivals</span>
-          </Link>
-          <Link
-            href="/products"
-            className="flex items-center gap-1.5 text-rose-400 hover:text-rose-300 transition-colors"
-          >
-            <Flame className="w-3.5 h-3.5" />
-            <span>Flash Deals</span>
-          </Link>
-          <div className="flex items-center gap-1 text-slate-400 font-normal">
-            <Tag className="w-3.5 h-3.5 text-amber-500" />
-            <span>Use code <strong className="text-amber-400 font-bold">WELCOME10</strong> for 10% off</span>
-          </div>
+        {/* Right Coupon Callout */}
+        <div className="flex items-center gap-1.5 text-[12px] text-[#666] font-medium">
+          <Tag className="w-3.5 h-3.5 text-[#ff9933]" />
+          <span>Use coupon <strong className="text-[#1e5cea] font-bold">WELCOME10</strong> for 10% discount</span>
         </div>
       </div>
     </nav>

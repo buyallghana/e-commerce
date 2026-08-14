@@ -7,21 +7,21 @@ import { getCategories, getProducts } from '@/lib/data/products';
 import { createClient } from '@/lib/supabase/server';
 import {
   ArrowRight,
-  Sparkles,
   Flame,
-  ShieldCheck,
   Truck,
-  Award,
+  ShieldCheck,
   CreditCard,
+  RotateCcw,
+  Sparkles,
   ChevronRight,
-  TrendingUp,
+  Clock,
 } from 'lucide-react';
 
-export const revalidate = 60; // ISR cache for 1 minute
+export const revalidate = 60;
 
 export default async function HomePage() {
   const categories = await getCategories();
-  const { products } = await getProducts({ limit: 8, sortBy: 'newest' });
+  const { products } = await getProducts({ limit: 12, sortBy: 'newest' });
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,229 +36,240 @@ export default async function HomePage() {
     isAdmin = profile?.role === 'admin';
   }
 
-  const featuredProducts = products.slice(0, 4);
+  const flashDeals = products.slice(0, 4);
   const bestSellers = products.slice(0, 8);
 
   return (
     <StoreShell categories={categories} userEmail={user?.email} isAdmin={isAdmin}>
-      {/* 1. Hero Showcase Section */}
-      <section className="bg-slate-950 text-white relative overflow-hidden py-10 sm:py-16 lg:py-20 border-b border-slate-800">
-        {/* Background subtle light effects */}
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 -mb-12 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left Column: Hero Copy */}
-            <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-amber-500/30 px-3.5 py-1.5 rounded-full text-xs font-bold text-amber-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Premier Ghanaian Physical Goods Store</span>
+      {/* 1. Hero Grid: Main Slider + 2 Side Promo Banners (Wolmart Demo 28 exact layout) */}
+      <section className="pt-4 pb-6 bg-[#f7f7f7]">
+        <div className="container-custom">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Main Hero Banner (8 Cols) */}
+            <div className="lg:col-span-8 bg-[#0f222b] text-white rounded-md overflow-hidden relative p-8 sm:p-12 flex flex-col justify-between min-h-[380px] shadow-xs">
+              <div className="max-w-md space-y-3 z-10">
+                <span className="inline-block bg-[#ff9933] text-black font-extrabold text-[11px] uppercase tracking-wider px-2.5 py-1 rounded">
+                  NEW SEASON ARRIVAL
+                </span>
+                <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight text-white">
+                  Authentic Ghanaian <br />
+                  <span className="text-[#1e5cea] text-white">Quality Products.</span>
+                </h1>
+                <p className="text-[13px] text-[#b0bec5] leading-relaxed">
+                  Handcrafted Kente apparel, full-grain leather bags, wireless tech, and pure organic Northern shea butter.
+                </p>
+                <div className="pt-2">
+                  <span className="text-xs text-[#90a4ae] block">Starting at only</span>
+                  <span className="text-2xl font-extrabold text-[#ff9933]">GH₵ 65.00</span>
+                </div>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                Authentic Quality Goods, <br className="hidden sm:inline" />
-                <span className="text-amber-400">Delivered Across Ghana.</span>
-              </h1>
-
-              <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                Discover tailored Kente print shirts, full-grain handcrafted leather bags, wireless audio gadgets, and 100% pure organic skincare.
-              </p>
-
-              {/* CTAs */}
-              <div className="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
+              <div className="pt-4 z-10">
                 <Link
                   href="/products"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-sm hover:bg-amber-400 shadow-md transition-all touch-target"
+                  className="inline-flex items-center gap-2 bg-[#1e5cea] hover:bg-[#1545b5] text-white font-bold text-[13px] px-6 py-3 rounded transition-colors uppercase tracking-wider shadow-sm"
                 >
-                  <span>Explore All Products</span>
+                  <span>Shop Collection</span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/products?sort=newest"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-sm hover:bg-slate-800 transition-colors touch-target"
-                >
-                  <Flame className="w-4 h-4 text-amber-400" />
-                  <span>Flash Deals</span>
                 </Link>
               </div>
 
-              {/* Trust Badges */}
-              <div className="pt-6 border-t border-slate-800/80 grid grid-cols-3 gap-3 text-left">
-                <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-xs text-slate-300 font-medium">16 Regions Delivery</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="text-xs text-slate-300 font-medium">MoMo & Card Escrow</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-blue-400 shrink-0" />
-                  <span className="text-xs text-slate-300 font-medium">100% Genuine</span>
-                </div>
+              {/* Decorative background visual */}
+              <div className="absolute right-0 bottom-0 top-0 w-1/2 opacity-20 lg:opacity-40 pointer-events-none">
+                <Image
+                  src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800"
+                  alt="Featured Arrival"
+                  fill
+                  className="object-cover object-center"
+                  priority
+                />
               </div>
             </div>
 
-            {/* Right Column: Hero Showcase Card */}
-            <div className="lg:col-span-5">
-              <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-2xl backdrop-blur-xs relative overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20">
-                    Featured Arrival
-                  </span>
-                  <span className="text-xs text-slate-400 font-semibold">GHS in Stock</span>
+            {/* 2 Staggered Side Promo Banners (4 Cols) */}
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              {/* Promo Banner 1: Fashion */}
+              <div className="flex-1 bg-[#1a202c] text-white rounded-md p-6 relative overflow-hidden flex flex-col justify-between shadow-xs">
+                <div className="z-10 space-y-1">
+                  <span className="text-[11px] font-bold text-[#ff9933] uppercase">SPECIAL OFFER</span>
+                  <h3 className="text-lg font-bold text-white">Genuine Leather Bags</h3>
+                  <p className="text-xs text-[#a0aec0]">Save 15% this week</p>
                 </div>
-
-                <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-slate-800 mb-4">
-                  <Image
-                    src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800"
-                    alt="Authentic Kente Print Shirt"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+                <div className="z-10 pt-3">
+                  <Link
+                    href="/products?category=fashion-apparel"
+                    className="text-xs font-bold text-[#1e5cea] hover:text-white transition-colors flex items-center gap-1 uppercase"
+                  >
+                    <span>Shop Now</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
+              </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-white text-base">Authentic Kente Shirt</h3>
-                    <p className="text-xs text-slate-400">Tailored 100% Ghana Cotton</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-slate-400 block font-medium">From</span>
-                    <span className="text-lg font-black text-amber-400">GH₵ 180.00</span>
-                  </div>
+              {/* Promo Banner 2: Electronics */}
+              <div className="flex-1 bg-[#242b35] text-white rounded-md p-6 relative overflow-hidden flex flex-col justify-between shadow-xs">
+                <div className="z-10 space-y-1">
+                  <span className="text-[11px] font-bold text-[#00d084] uppercase">BEST VALUE</span>
+                  <h3 className="text-lg font-bold text-white">True Wireless Earbuds</h3>
+                  <p className="text-xs text-[#a0aec0]">Fast Courier Dispatch</p>
                 </div>
-
-                <Link
-                  href="/products/authentic-kente-print-button-shirt"
-                  className="mt-4 w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
-                >
-                  View Details & Sizes <ChevronRight className="w-4 h-4" />
-                </Link>
+                <div className="z-10 pt-3">
+                  <Link
+                    href="/products?category=electronics-gadgets"
+                    className="text-xs font-bold text-[#ff9933] hover:text-white transition-colors flex items-center gap-1 uppercase"
+                  >
+                    <span>Discover More</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Featured Categories Strip (Wolmart demo 28 style) */}
-      <section className="py-10 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
-                Shop by Department
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Carefully categorized physical goods crafted for durability and style.
-              </p>
+      {/* 2. Benefits & Value Props Bar (Wolmart 4-column horizontal feature strip) */}
+      <section className="py-4 bg-white border-y border-[#e1e1e1]">
+        <div className="container-custom">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex items-center gap-3.5 py-2">
+              <div className="w-12 h-12 rounded-full bg-[#f4f7fe] flex items-center justify-center text-[#1e5cea] shrink-0 border border-[#e3ebfc]">
+                <Truck className="w-6 h-6 stroke-[1.8]" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[14px] text-[#222529]">Ghana-Wide Delivery</h4>
+                <p className="text-[12px] text-[#666]">Doorstep delivery in all 16 regions</p>
+              </div>
             </div>
+
+            <div className="flex items-center gap-3.5 py-2">
+              <div className="w-12 h-12 rounded-full bg-[#f0fbf7] flex items-center justify-center text-[#00d084] shrink-0 border border-[#d3f4e8]">
+                <ShieldCheck className="w-6 h-6 stroke-[1.8]" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[14px] text-[#222529]">100% Genuine Quality</h4>
+                <p className="text-[12px] text-[#666]">Inspected single-vendor inventory</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3.5 py-2">
+              <div className="w-12 h-12 rounded-full bg-[#fef8f0] flex items-center justify-center text-[#ff9933] shrink-0 border border-[#fbe9d2]">
+                <CreditCard className="w-6 h-6 stroke-[1.8]" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[14px] text-[#222529]">Paystack Secure Escrow</h4>
+                <p className="text-[12px] text-[#666]">Pay with MTN MoMo, Telecel & Cards</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3.5 py-2">
+              <div className="w-12 h-12 rounded-full bg-[#fbf0f0] flex items-center justify-center text-[#e53935] shrink-0 border border-[#f6d7d7]">
+                <RotateCcw className="w-6 h-6 stroke-[1.8]" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[14px] text-[#222529]">7-Day Easy Returns</h4>
+                <p className="text-[12px] text-[#666]">Hassle-free return request flow</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Circular Category Icons Strip (Wolmart Demo 28 exact match) */}
+      <section className="py-8 bg-white border-b border-[#e1e1e1]">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-[18px] font-bold text-[#222529] tracking-tight">
+              Explore Popular Departments
+            </h2>
             <Link
               href="/products"
-              className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+              className="text-[13px] font-bold text-[#1e5cea] hover:text-[#1545b5] flex items-center gap-1"
             >
               <span>View All</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {categories.map((category) => (
+            {categories.map((c) => (
               <Link
-                key={category.id}
-                href={`/products?category=${category.slug}`}
-                className="group bg-slate-50 hover:bg-amber-50/50 border border-slate-200/80 hover:border-amber-400/60 rounded-2xl p-4 transition-all duration-300 flex flex-col items-center text-center shadow-2xs hover:shadow-xs"
+                key={c.id}
+                href={`/products?category=${c.slug}`}
+                className="group flex flex-col items-center text-center p-4 rounded-md border border-[#e1e1e1] hover:border-[#1e5cea] bg-[#fafafa] hover:bg-white transition-all shadow-2xs"
               >
-                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center mb-3 group-hover:scale-105 transition-transform text-slate-900 group-hover:text-amber-600">
-                  <Sparkles className="w-6 h-6" />
+                <div className="w-16 h-16 rounded-full bg-white border border-[#e1e1e1] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform text-[#1e5cea]">
+                  <Sparkles className="w-7 h-7" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm group-hover:text-amber-700 transition-colors">
-                  {category.name}
+                <h3 className="font-bold text-[14px] text-[#222529] group-hover:text-[#1e5cea] transition-colors">
+                  {c.name}
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">
-                  {category.description || 'Explore products'}
-                </p>
+                <span className="text-[11px] text-[#888] mt-0.5">Explore Catalog →</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 3. Flash Deals & New Arrivals Grid */}
-      <section className="py-12 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
+      {/* 4. Deals of The Day with Countdown Timer (Wolmart Style) */}
+      <section className="py-8 bg-[#f7f7f7]">
+        <div className="container-custom">
+          {/* Section Header with Countdown Timer */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-3 border-b border-[#e1e1e1]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
-                <Flame className="w-5 h-5" />
+              <div className="flex items-center gap-1.5 text-[#e53935] font-black text-xl tracking-tight">
+                <Flame className="w-5 h-5 fill-[#e53935]" />
+                <span>Deals of The Day</span>
               </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
-                  Hot Deals & Bestsellers
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500">
-                  Limited stock items with fast regional shipping available today.
-                </p>
+
+              {/* Countdown Boxes */}
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-[#222]">
+                <Clock className="w-3.5 h-3.5 text-[#666] ml-2" />
+                <span className="bg-[#222529] text-white px-2 py-0.5 rounded font-mono">02d</span>
+                <span>:</span>
+                <span className="bg-[#222529] text-white px-2 py-0.5 rounded font-mono">14h</span>
+                <span>:</span>
+                <span className="bg-[#222529] text-white px-2 py-0.5 rounded font-mono">35m</span>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-2 bg-amber-100/70 border border-amber-200 text-amber-900 text-xs font-bold px-3 py-1.5 rounded-lg shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-amber-700" />
-              <span>Special Promo: Use WELCOME10 for 10% Off</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-[#666]">Special Promo:</span>
+              <span className="bg-[#ff9933]/15 text-[#b35900] border border-[#ff9933]/30 px-2.5 py-0.5 rounded text-[11px] font-bold">
+                Code: WELCOME10
+              </span>
             </div>
           </div>
 
-          {/* Product Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {bestSellers.map((product) => (
+          {/* 4-Col Deals Product Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+            {flashDeals.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
-          </div>
-
-          <div className="mt-10 text-center">
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-slate-950 text-white font-bold text-sm hover:bg-slate-800 transition-colors shadow-sm"
-            >
-              <span>Browse Full Product Catalog</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* 4. Trust & Security Banner */}
-      <section className="py-12 bg-white border-t border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-slate-950 text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden">
-            <div className="max-w-2xl space-y-4">
-              <div className="inline-flex items-center gap-2 bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-xs font-bold">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Verified Ghanaian Seller & Physical Inventory</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Direct Single-Vendor Reliability, No Third-Party Middlemen.
-              </h2>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Every item is stored, inspected, and shipped directly from our Accra warehouse. If an item doesn&apos;t match your expectations, easily request a return right from your account.
-              </p>
-              <div className="pt-2 flex flex-wrap items-center gap-4">
-                <Link
-                  href="/products"
-                  className="px-6 py-3 rounded-xl bg-amber-500 text-slate-950 font-bold text-sm hover:bg-amber-400 transition-colors"
-                >
-                  Shop Now
-                </Link>
-                <Link
-                  href="/account"
-                  className="px-6 py-3 rounded-xl bg-slate-800 text-slate-200 font-semibold text-sm hover:bg-slate-700 transition-colors"
-                >
-                  Track an Existing Order
-                </Link>
-              </div>
-            </div>
+      {/* 5. Featured Catalog Goods */}
+      <section className="py-8 bg-white border-t border-[#e1e1e1]">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-6 pb-3 border-b border-[#e1e1e1]">
+            <h2 className="text-[18px] font-bold text-[#222529] tracking-tight">
+              Trending Products & Bestsellers
+            </h2>
+            <Link
+              href="/products"
+              className="text-[13px] font-bold text-[#1e5cea] hover:text-[#1545b5] flex items-center gap-1"
+            >
+              <span>View All ({bestSellers.length})</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+            {bestSellers.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         </div>
       </section>

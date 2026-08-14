@@ -31,6 +31,40 @@ export async function getCustomerOrders(): Promise<Order[]> {
   return (data as Order[]) || [];
 }
 
+export async function getAdminOrders(statusFilter?: string): Promise<Array<Order & { customer_profile?: { full_name: string; email: string } }>> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') return [];
+
+  const adminSupabase = createAdminClient();
+  let query = adminSupabase
+    .from('orders')
+    .select(`
+      *,
+      items:order_items(*),
+      customer_profile:profiles(full_name, email)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (statusFilter && statusFilter !== 'all') {
+    query = query.eq('status', statusFilter);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+
+  return data as unknown as Array<Order & { customer_profile?: { full_name: string; email: string } }>;
+}
+
 export async function getOrderDetails(orderId: string): Promise<Order | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -120,21 +154,20 @@ export async function verifyOrderPayment(orderId: string, reference: string) {
   }
 }
 
-export async function adminUpdateOrderStatusAction({
-  orderId,
-  status,
-  note,
-}: {
-  orderId: string;
-  status: OrderStatus;
-  note?: string;
-}) {
+export async function adminUpdateOrderStatusAction(
+  orderIdOrObj: string | { orderId: string; status: OrderStatus; note?: string },
+  maybeStatus?: OrderStatus,
+  maybeNote?: string
+) {
+  const orderId = typeof orderIdOrObj === 'string' ? orderIdOrObj : orderIdOrObj.orderId;
+  const status = typeof orderIdOrObj === 'string' ? maybeStatus! : orderIdOrObj.status;
+  const note = typeof orderIdOrObj === 'string' ? maybeNote : orderIdOrObj.note;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return { error: 'Unauthorized' };
 
-  // Check admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -145,7 +178,6 @@ export async function adminUpdateOrderStatusAction({
 
   const adminSupabase = createAdminClient();
 
-  // If cancelling a paid order, restock items
   if (status === 'cancelled') {
     const { data: order } = await adminSupabase
       .from('orders')
@@ -154,7 +186,6 @@ export async function adminUpdateOrderStatusAction({
       .single();
 
     if (order && order.payment_status === 'successful') {
-      // Restock each variant
       for (const item of order.items || []) {
         const { data: v } = await adminSupabase
           .from('product_variants')
@@ -194,7 +225,6 @@ export async function adminUpdateOrderStatusAction({
 
   if (error) return { error: error.message };
 
-  // Insert timeline
   await adminSupabase.from('order_timeline').insert({
     order_id: orderId,
     status,
@@ -202,7 +232,6 @@ export async function adminUpdateOrderStatusAction({
     created_by: user.id,
   });
 
-  // Notify customer
   if (updatedOrder) {
     const statusMessages: Record<string, string> = {
       processing: `Your order #${updatedOrder.order_number} is currently being packaged.`,

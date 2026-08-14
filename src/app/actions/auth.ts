@@ -27,7 +27,8 @@ const addressSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export async function signUpAction(prevState: unknown, formData: FormData) {
+export async function signUpAction(formDataOrPrevState: unknown, maybeFormData?: FormData) {
+  const formData = (maybeFormData instanceof FormData ? maybeFormData : formDataOrPrevState) as FormData;
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const fullName = formData.get('fullName') as string;
@@ -55,7 +56,6 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
     return { error: error.message };
   }
 
-  // If email confirmation is disabled or automatic session is created
   if (data.session) {
     redirect('/account');
   }
@@ -63,7 +63,8 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
   return { success: 'Account created successfully! You can now log in.' };
 }
 
-export async function signInAction(prevState: unknown, formData: FormData) {
+export async function signInAction(formDataOrPrevState: unknown, maybeFormData?: FormData) {
+  const formData = (maybeFormData instanceof FormData ? maybeFormData : formDataOrPrevState) as FormData;
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const next = (formData.get('next') as string) || '/account';
@@ -94,7 +95,8 @@ export async function signOutAction() {
   redirect('/');
 }
 
-export async function updateProfileAction(prevState: unknown, formData: FormData) {
+export async function updateProfileAction(formDataOrPrevState: unknown, maybeFormData?: FormData) {
+  const formData = (maybeFormData instanceof FormData ? maybeFormData : formDataOrPrevState) as FormData;
   const fullName = formData.get('fullName') as string;
   const phone = formData.get('phone') as string;
 
@@ -122,7 +124,8 @@ export async function updateProfileAction(prevState: unknown, formData: FormData
   return { success: 'Profile updated successfully.' };
 }
 
-export async function addAddressAction(prevState: unknown, formData: FormData) {
+export async function addAddressAction(formDataOrPrevState: unknown, maybeFormData?: FormData) {
+  const formData = (maybeFormData instanceof FormData ? maybeFormData : formDataOrPrevState) as FormData;
   const recipientName = formData.get('recipientName') as string;
   const phoneNumber = formData.get('phoneNumber') as string;
   const streetAddress = formData.get('streetAddress') as string;
@@ -153,7 +156,6 @@ export async function addAddressAction(prevState: unknown, formData: FormData) {
   }
 
   if (parsed.data.isDefault) {
-    // Reset all previous defaults
     await supabase
       .from('addresses')
       .update({ is_default: false })

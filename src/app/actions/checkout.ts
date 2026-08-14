@@ -7,12 +7,22 @@ import { initializePaystackTransaction } from '@/lib/paystack';
 import { generateOrderNumber } from '@/lib/utils';
 import { CartItem } from '@/types/database';
 
-export async function initiateCheckoutAction({
+export async function createCheckoutOrderAction({
   addressId,
+  shippingAddress,
   couponCode,
   customerNotes,
 }: {
-  addressId: string;
+  addressId?: string;
+  shippingAddress?: {
+    recipient_name: string;
+    phone_number: string;
+    region: string;
+    city: string;
+    address_line_1: string;
+    gps_address?: string;
+    delivery_notes?: string;
+  };
   couponCode?: string;
   customerNotes?: string;
 }) {
@@ -20,7 +30,7 @@ export async function initiateCheckoutAction({
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: 'You must be logged in to complete checkout.' };
+    return { error: 'You must be logged in to complete checkout.', unauthenticated: true };
   }
 
   // 1. Fetch user's cart
@@ -41,7 +51,7 @@ export async function initiateCheckoutAction({
 
   const cartItems = cartData as unknown as CartItem[];
 
-  // 2. Re-fetch current database variant stock & price (Server-side validation)
+  // 2. Re-fetch current database variant stock & price
   const variantIds = cartItems.map((ci) => ci.variant_id);
   const { data: currentVariants, error: varError } = await supabase
     .from('product_variants')
@@ -49,12 +59,11 @@ export async function initiateCheckoutAction({
     .in('id', variantIds);
 
   if (varError || !currentVariants) {
-    return { error: 'Failed to verify current product prices and availability.' };
+    return { error: 'Failed to verify product availability.' };
   }
 
   const variantMap = new Map(currentVariants.map((v) => [v.id, v]));
 
-  // Verify stock & compute verified subtotal and weight
   let subtotal = 0;
   let totalWeightKg = 0;
   const orderItemsData = [];
@@ -67,7 +76,7 @@ export async function initiateCheckoutAction({
 
     if (freshVariant.stock_quantity < item.quantity) {
       return {
-        error: `Insufficient stock for "${freshVariant.title}". Available: ${freshVariant.stock_quantity}, in cart: ${item.quantity}.`,
+        error: `Insufficient stock for "${freshVariant.title}". Available: ${freshVariant.stock_quantity}.`,
       };
     }
 
@@ -95,24 +104,48 @@ export async function initiateCheckoutAction({
     });
   }
 
-  // 3. Fetch and verify shipping address
-  const { data: address, error: addrError } = await supabase
-    .from('addresses')
-    .select('*')
-    .eq('id', addressId)
-    .eq('user_id', user.id)
-    .single();
+  // 3. Resolve shipping address
+  let finalRecipientName = '';
+  let finalPhoneNumber = '';
+  let finalStreetAddress = '';
+  let finalCity = '';
+  let finalRegion = '';
+  let finalDigitalAddress: string | undefined = undefined;
 
-  if (addrError || !address) {
-    return { error: 'Please select a valid delivery address.' };
+  if (shippingAddress) {
+    finalRecipientName = shippingAddress.recipient_name;
+    finalPhoneNumber = shippingAddress.phone_number;
+    finalStreetAddress = shippingAddress.address_line_1;
+    finalCity = shippingAddress.city;
+    finalRegion = shippingAddress.region;
+    finalDigitalAddress = shippingAddress.gps_address;
+  } else if (addressId) {
+    const { data: address } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('id', addressId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!address) {
+      return { error: 'Please provide a valid delivery address.' };
+    }
+    finalRecipientName = address.recipient_name;
+    finalPhoneNumber = address.phone_number;
+    finalStreetAddress = address.street_address;
+    finalCity = address.city;
+    finalRegion = address.region;
+    finalDigitalAddress = address.digital_address || undefined;
+  } else {
+    return { error: 'Delivery address required.' };
   }
 
   // 4. Resolve shipping zone & rate
   const zones = await getActiveShippingZones();
   const matchedZone = zones.find((z) =>
     z.regions.some((r) =>
-      r.toLowerCase().includes(address.region.toLowerCase()) ||
-      address.region.toLowerCase().includes(r.toLowerCase())
+      r.toLowerCase().includes(finalRegion.toLowerCase()) ||
+      finalRegion.toLowerCase().includes(r.toLowerCase())
     )
   ) || zones[0];
 
@@ -129,11 +162,9 @@ export async function initiateCheckoutAction({
   let discountTotal = 0;
   let appliedCouponId: string | null = null;
 
-  // Automatic discounts
   const autoDiscount = await calculateAutomaticDiscounts(cartItems, subtotal);
   discountTotal += autoDiscount.discountTotal;
 
-  // Coupon code
   if (couponCode && couponCode.trim()) {
     const couponResult = await validateAndApplyCoupon({
       code: couponCode,
@@ -153,7 +184,7 @@ export async function initiateCheckoutAction({
   const orderNumber = generateOrderNumber();
   const paystackRef = `bag_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
-  // 6. Create Order in Database
+  // 6. Create Order
   const { data: order, error: orderInsertError } = await supabase
     .from('orders')
     .insert({
@@ -168,17 +199,17 @@ export async function initiateCheckoutAction({
       discount_total: discountTotal,
       grand_total: grandTotal,
       shipping_address: {
-        recipient_name: address.recipient_name,
-        phone_number: address.phone_number,
-        street_address: address.street_address,
-        city: address.city,
-        region: address.region,
-        digital_address: address.digital_address || undefined,
+        recipient_name: finalRecipientName,
+        phone_number: finalPhoneNumber,
+        street_address: finalStreetAddress,
+        city: finalCity,
+        region: finalRegion,
+        digital_address: finalDigitalAddress,
       },
       shipping_zone_id: matchedZone?.id || null,
       total_weight_kg: totalWeightKg,
       coupon_id: appliedCouponId,
-      customer_notes: customerNotes || null,
+      customer_notes: customerNotes || shippingAddress?.delivery_notes || null,
     })
     .select()
     .single();
@@ -188,23 +219,16 @@ export async function initiateCheckoutAction({
     return { error: 'Failed to create order. Please try again.' };
   }
 
-  // 7. Insert Order Items
+  // 7. Insert Line Items
   const itemsWithOrderId = orderItemsData.map((item) => ({
     ...item,
     order_id: order.id,
   }));
 
-  const { error: itemsError } = await supabase
-    .from('order_items')
-    .insert(itemsWithOrderId);
+  await supabase.from('order_items').insert(itemsWithOrderId);
 
-  if (itemsError) {
-    console.error('Order items error:', itemsError);
-    return { error: 'Failed to save order line items.' };
-  }
-
-  // 8. Initialize Paystack Transaction
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // 8. Paystack Initialize
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://e-commerce-five-lemon-60.vercel.app';
   const callbackUrl = `${appUrl}/orders/${order.id}/verify?reference=${paystackRef}`;
 
   try {
@@ -220,7 +244,6 @@ export async function initiateCheckoutAction({
       },
     });
 
-    // Save access code
     await supabase
       .from('orders')
       .update({ paystack_access_code: paystackRes.data.access_code })
@@ -239,7 +262,9 @@ export async function initiateCheckoutAction({
       error:
         err instanceof Error
           ? err.message
-          : 'Unable to connect to Paystack payment gateway. Please verify your connection or keys.',
+          : 'Unable to connect to Paystack payment gateway. Please check Paystack keys.',
     };
   }
 }
+
+export const initiateCheckoutAction = createCheckoutOrderAction;
